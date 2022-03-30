@@ -44,7 +44,7 @@ func TestUpdateDataUser(t *testing.T) {
 			requiredMocks: func() {
 				mock.On("UserGetByID", ctx, user1.ID, false).Return(nil, 0, Err).Once()
 			},
-			expected: Expected{nil, Err},
+			expected: Expected{nil, NewErrUserNotFound(user1.ID, Err)},
 		},
 		{
 			description: "Fails conflict username",
@@ -55,7 +55,7 @@ func TestUpdateDataUser(t *testing.T) {
 				mock.On("UserGetByUsername", ctx, user1.Username).Return(user2, nil).Once()
 				mock.On("UserGetByEmail", ctx, user1.Email).Return(user1, nil).Once()
 			},
-			expected: Expected{[]string{"username"}, ErrConflict},
+			expected: Expected{[]string{"username"}, NewErrUserDuplicated([]string{user1.Username}, nil)},
 		},
 		{
 			description: "Fails conflict email and username",
@@ -66,7 +66,7 @@ func TestUpdateDataUser(t *testing.T) {
 				mock.On("UserGetByUsername", ctx, user1.Username).Return(user2, nil).Once()
 				mock.On("UserGetByEmail", ctx, user1.Email).Return(user2, nil).Once()
 			},
-			expected: Expected{[]string{"username", "email"}, ErrConflict},
+			expected: Expected{[]string{"username", "email"}, NewErrUserDuplicated([]string{user1.Username, user1.Email}, nil)},
 		},
 		{
 			description: "Fails invalid username",
@@ -75,7 +75,7 @@ func TestUpdateDataUser(t *testing.T) {
 			requiredMocks: func() {
 				mock.On("UserGetByID", ctx, user1.ID, false).Return(user1, 0, nil).Once()
 			},
-			expected: Expected{[]string{"username"}, ErrBadRequest},
+			expected: Expected{[]string{"username"}, NewErrUserInvalid([]string{"username"}, nil)},
 		},
 		{
 			description: "Fails invalid email",
@@ -84,7 +84,7 @@ func TestUpdateDataUser(t *testing.T) {
 			requiredMocks: func() {
 				mock.On("UserGetByID", ctx, user1.ID, false).Return(user1, 0, nil).Once()
 			},
-			expected: Expected{[]string{"email"}, ErrBadRequest},
+			expected: Expected{[]string{"email"}, NewErrUserInvalid([]string{"email"}, nil)},
 		},
 		{
 			description: "Fails invalid email and username",
@@ -93,7 +93,7 @@ func TestUpdateDataUser(t *testing.T) {
 			requiredMocks: func() {
 				mock.On("UserGetByID", ctx, user1.ID, false).Return(user1, 0, nil).Once()
 			},
-			expected: Expected{[]string{"email", "username"}, ErrBadRequest},
+			expected: Expected{[]string{"email", "username"}, NewErrUserInvalid([]string{"email", "username"}, nil)},
 		},
 		{
 			description: "Fails empty username",
@@ -102,7 +102,7 @@ func TestUpdateDataUser(t *testing.T) {
 			requiredMocks: func() {
 				mock.On("UserGetByID", ctx, user1.ID, false).Return(user1, 0, nil).Once()
 			},
-			expected: Expected{[]string{"name"}, ErrBadRequest},
+			expected: Expected{[]string{"name"}, NewErrUserInvalid([]string{"name"}, nil)},
 		},
 		{
 			description: "Fails empty email",
@@ -111,7 +111,7 @@ func TestUpdateDataUser(t *testing.T) {
 			requiredMocks: func() {
 				mock.On("UserGetByID", ctx, user1.ID, false).Return(user1, 0, nil).Once()
 			},
-			expected: Expected{[]string{"email"}, ErrBadRequest},
+			expected: Expected{[]string{"email"}, NewErrUserInvalid([]string{"email"}, nil)},
 		},
 		{
 			description: "Successful update user data",
@@ -143,6 +143,8 @@ func TestUpdatePasswordUser(t *testing.T) {
 	mock := &mocks.Store{}
 	s := NewService(store.Store(mock), privateKey, publicKey, storecache.NewNullCache(), clientMock, nil)
 
+	Err := errors.New("error", "", 0)
+
 	ctx := context.TODO()
 
 	type updatePassword struct {
@@ -163,30 +165,30 @@ func TestUpdatePasswordUser(t *testing.T) {
 			data:          updatePassword{currentPassword: "1234", newPassword: "1234567"},
 			id:            "1",
 			requiredMocks: func() {},
-			expected:      ErrBadRequest,
+			expected:      NewErrUserInvalid([]string{"current_password"}, nil),
 		},
 		{
 			name:          "Fail when new password is invalid",
 			data:          updatePassword{currentPassword: "123456", newPassword: "123"},
 			id:            "1",
 			requiredMocks: func() {},
-			expected:      ErrBadRequest,
+			expected:      NewErrUserInvalid([]string{"new_password"}, nil),
 		},
 		{
 			name:          "Fail when current and new password are equals",
 			data:          updatePassword{currentPassword: "123456", newPassword: "123456"},
 			id:            "1",
 			requiredMocks: func() {},
-			expected:      ErrBadRequest,
+			expected:      NewErrUserDuplicated([]string{"current_password", "new_password"}, nil),
 		},
 		{
-			name: "Fails when ID is not valid",
+			name: "Fails when user is not found",
 			data: updatePassword{currentPassword: "123456", newPassword: "123567"},
 			id:   "2",
 			requiredMocks: func() {
-				mock.On("UserGetByID", ctx, "2", false).Return(nil, 0, errors.New("error", "", 0))
+				mock.On("UserGetByID", ctx, "2", false).Return(nil, 0, Err)
 			},
-			expected: ErrUnauthorized,
+			expected: NewErrUserNotFound("2", Err),
 		},
 		{
 			name: "Fails when user's password and current password is not equal",
@@ -196,7 +198,7 @@ func TestUpdatePasswordUser(t *testing.T) {
 				user := &models.User{UserData: models.UserData{Name: "name", Email: "user1@email.com", Username: "username1"}, UserPassword: models.UserPassword{Password: validator.HashPassword("password")}, ID: "1"}
 				mock.On("UserGetByID", ctx, "1", false).Return(user, 0, nil).Once()
 			},
-			expected: ErrUnauthorized,
+			expected: NewErrUserInvalid([]string{"current_password"}, nil),
 		},
 		{
 			name: "Success to update user's password",

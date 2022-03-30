@@ -51,11 +51,12 @@ type ErrDataInvalid struct {
 var (
 	ErrReport                    = errors.New("report error", ErrLayer, ErrCodeInvalid)
 	ErrNotFound                  = errors.New("not found", ErrLayer, ErrCodeNotFound)
-	ErrConflict                  = errors.New("conflict", ErrLayer, ErrCodeDuplicated)
 	ErrBadRequest                = errors.New("bad request", ErrLayer, ErrCodeInvalid)
 	ErrUnauthorized              = errors.New("unauthorized", ErrLayer, ErrCodeInvalid)
 	ErrForbidden                 = errors.New("forbidden", ErrLayer, ErrCodeNotFound)
 	ErrUserNotFound              = errors.New("user not found", ErrLayer, ErrCodeNotFound)
+	ErrUserInvalid               = errors.New("user invalid", ErrLayer, ErrCodeInvalid)
+	ErrUserDuplicated            = errors.New("user duplicated", ErrLayer, ErrCodeDuplicated)
 	ErrNamespaceNotFound         = errors.New("namespace not found", ErrLayer, ErrCodeNotFound)
 	ErrNamespaceMemberNotFound   = errors.New("member not found", ErrLayer, ErrCodeNotFound)
 	ErrNamespaceDuplicatedMember = errors.New("member duplicated", ErrLayer, ErrCodeDuplicated)
@@ -113,4 +114,19 @@ func NewErrTagNotFound(tag string, next error) error {
 // NewErrTagDuplicated returns an error when the tag is duplicated.
 func NewErrTagDuplicated(tag string, next error) error {
 	return NewErrDuplicated(ErrDuplicateTagName, []string{tag}, next)
+}
+
+// NewErrUserNotFound returns an error when the user is not found.
+func NewErrUserNotFound(id string, next error) error {
+	return NewErrNotFound(ErrUserNotFound, id, next)
+}
+
+// NewErrUserInvalid returns an error when the user is invalid.
+func NewErrUserInvalid(fields []string, next error) error {
+	return NewErrInvalid(ErrUserInvalid, fields, next)
+}
+
+// NewErrUserDuplicated returns an error when the user is duplicated.
+func NewErrUserDuplicated(values []string, next error) error {
+	return NewErrDuplicated(ErrUserDuplicated, values, next)
 }

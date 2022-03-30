@@ -4,7 +4,8 @@ import (
 	"net/http"
 
 	"github.com/shellhub-io/shellhub/api/pkg/gateway"
-	"github.com/shellhub-io/shellhub/api/services"
+	"github.com/shellhub-io/shellhub/api/routes/handlers/converter"
+	"github.com/shellhub-io/shellhub/pkg/errors"
 	"github.com/shellhub-io/shellhub/pkg/models"
 )
 
@@ -25,15 +26,16 @@ func (h *Handler) UpdateUserData(c gateway.Context) error {
 		return err
 	}
 
+	// FIXME: API compatibility
+	//
+	// The UI uses the fields with error messages to identify if it is invalid or duplicated.
 	if fields, err := h.service.UpdateDataUser(c.Ctx(), &user, c.Param(ParamUserID)); err != nil {
-		switch {
-		case err == services.ErrBadRequest:
-			return c.JSON(http.StatusBadRequest, fields)
-		case err == services.ErrConflict:
-			return c.JSON(http.StatusConflict, fields)
-		default:
+		e, ok := err.(errors.Error)
+		if !ok {
 			return err
 		}
+
+		return c.JSON(converter.FromErrServiceToHTTPStatus(e.Code), fields)
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -49,14 +51,7 @@ func (h *Handler) UpdateUserPassword(c gateway.Context) error {
 	}
 
 	if err := h.service.UpdatePasswordUser(c.Ctx(), req.CurrentPassword, req.NewPassword, c.Param(ParamUserID)); err != nil {
-		switch {
-		case err == services.ErrBadRequest:
-			return c.NoContent(http.StatusBadRequest)
-		case err == services.ErrUnauthorized:
-			return c.NoContent(http.StatusUnauthorized)
-		default:
-			return err
-		}
+		return err
 	}
 
 	return c.NoContent(http.StatusOK)
