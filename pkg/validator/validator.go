@@ -23,8 +23,8 @@ func getValidateTag(s interface{}, name string) (string, bool) {
 	return f.Tag.Get("validate"), true
 }
 
-// getInvalidFields gets the fields reported as invalids.
-func getInvalidFields(err error) ([]string, error) {
+// GetInvalidFields gets the fields reported as invalids.
+func GetInvalidFields(err error) ([]string, error) {
 	f := []string{}
 	for _, err := range err.(validator.ValidationErrors) {
 		f = append(f, strings.ToLower(err.Field()))
@@ -35,7 +35,7 @@ func getInvalidFields(err error) ([]string, error) {
 
 func ValidateStruct(data interface{}) ([]string, error) {
 	if err := validator.New().Struct(data); err != nil {
-		return getInvalidFields(err)
+		return GetInvalidFields(err)
 	}
 
 	return nil, nil
@@ -43,7 +43,7 @@ func ValidateStruct(data interface{}) ([]string, error) {
 
 func ValidateVar(data interface{}, tag string) ([]string, error) {
 	if err := validator.New().Var(data, tag); err != nil {
-		return getInvalidFields(err)
+		return GetInvalidFields(err)
 	}
 
 	return nil, nil
