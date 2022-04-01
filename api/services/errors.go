@@ -70,7 +70,7 @@ var (
 	ErrDeviceNotFound            = errors.New("device not found", ErrLayer, ErrCodeNotFound)
 	ErrMaxDeviceCountReached     = errors.New("maximum number of accepted devices reached", ErrLayer, ErrCodeLimit)
 	ErrDuplicatedDeviceName      = errors.New("device name duplicated", ErrLayer, ErrCodeDuplicated)
-	ErrDuplicateFingerprint      = errors.New("fingerprint duplicated", ErrLayer, ErrCodeDuplicated)
+	ErrPublicKeyDuplicated       = errors.New("public key duplicated", ErrLayer, ErrCodeDuplicated)
 	ErrPublicKeyNotFound         = errors.New("public key not found", ErrLayer, ErrCodeNotFound)
 	ErrPublicKeyInvalid          = errors.New("public key invalid", ErrLayer, ErrCodeInvalid)
 	ErrTypeAssertion             = errors.New("type assertion failed", ErrLayer, ErrCodeInvalid)
@@ -89,6 +89,11 @@ func NewErrInvalid(err error, fields []string, next error) error {
 // NewErrDuplicated returns an error with the ErrDataDuplicated and wrap an error.
 func NewErrDuplicated(err error, values []string, next error) error {
 	return errors.Wrap(errors.WithData(err, ErrDataDuplicated{Values: values}), next)
+}
+
+// NewErrLimit returns an error with the ErrDataLimit and wrap an error.
+func NewErrLimit(err error, limit int, next error) error {
+	return errors.Wrap(errors.WithData(err, ErrDataLimit{Limit: limit}), next)
 }
 
 // NewErrNamespaceNotFound returns an error when the namespace is not found.
@@ -129,4 +134,24 @@ func NewErrUserInvalid(fields []string, next error) error {
 // NewErrUserDuplicated returns an error when the user is duplicated.
 func NewErrUserDuplicated(values []string, next error) error {
 	return NewErrDuplicated(ErrUserDuplicated, values, next)
+}
+
+// NewErrPublicKeyNotFound returns an error when the public key is not found.
+func NewErrPublicKeyNotFound(id string, next error) error {
+	return NewErrNotFound(ErrPublicKeyNotFound, id, next)
+}
+
+// NewErrPublicKeyInvalid returns an error when the public key is invalid.
+func NewErrPublicKeyInvalid(fields []string, next error) error {
+	return NewErrInvalid(ErrPublicKeyInvalid, fields, next)
+}
+
+// NewErrTagLimit returns an error when the tag limit is reached.
+func NewErrTagLimit(limit int, next error) error {
+	return NewErrLimit(ErrMaxTagReached, limit, next)
+}
+
+// NewErrPublicKeyDuplicated returns an error when the public key is duplicated.
+func NewErrPublicKeyDuplicated(values []string, next error) error {
+	return NewErrDuplicated(ErrPublicKeyDuplicated, values, next)
 }
