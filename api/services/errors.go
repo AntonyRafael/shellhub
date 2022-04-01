@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/shellhub-io/shellhub/pkg/errors"
+	"github.com/shellhub-io/shellhub/pkg/models"
 )
 
 // ErrLayer is an error level. Each error defined at this level, is container to it.
@@ -154,4 +155,9 @@ func NewErrTagLimit(limit int, next error) error {
 // NewErrPublicKeyDuplicated returns an error when the public key is duplicated.
 func NewErrPublicKeyDuplicated(values []string, next error) error {
 	return NewErrDuplicated(ErrPublicKeyDuplicated, values, next)
+}
+
+// NewErrDeviceNotFound returns an error when the device is not found.
+func NewErrDeviceNotFound(id models.UID, next error) error {
+	return NewErrNotFound(ErrDeviceNotFound, string(id), next)
 }
