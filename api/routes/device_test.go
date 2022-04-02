@@ -9,9 +9,9 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/shellhub-io/shellhub/api/pkg/gateway"
+	"github.com/shellhub-io/shellhub/api/pkg/guard"
 	svc "github.com/shellhub-io/shellhub/api/services"
 	"github.com/shellhub-io/shellhub/api/services/mocks"
-	"github.com/shellhub-io/shellhub/pkg/authorizer"
 	"github.com/shellhub-io/shellhub/pkg/models"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +27,7 @@ func TestUpdatePendingStatus(t *testing.T) {
 
 		req, _ := http.NewRequest(http.MethodPatch, "/devices/:uid/:status", bytes.NewBuffer([]byte{}))
 		req.Header.Set("Content-Role", "application/json")
-		req.Header.Set("X-Role", authorizer.MemberRoleOwner)
+		req.Header.Set("X-Role", guard.RoleOwner)
 		echoContext := e.NewContext(req, rec)
 		echoContext.SetParamNames("uid", "status")
 		echoContext.SetParamValues("123", "pending")
